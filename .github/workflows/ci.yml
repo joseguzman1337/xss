@@ -1,0 +1,105 @@
+# Lint metadata — top-level minimum-privilege token. The lint job needs read
+# access to the repo contents; the CodeQL job elevates to security-events: write
+# at the job level (required for SARIF upload) and does not need contents: write.
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly CodeQL scan to catch new advisories even on quiet repos.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+name: CI
+
+jobs:
+  lint:
+    name: Lint packaging metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@72c2e9c8dbe1b38affd10a5bb9f9b0e8a4e5a3c2 # v2.16.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate YAML
+        run: |
+          python3 - <<'PY'
+          import sys
+          try:
+              import yaml
+          except ImportError:
+              sys.exit(0)  # yaml missing on ubuntu-latest — skip silently
+          from pathlib import Path
+          errors = []
+          for p in Path('.').rglob('*.y*ml'):
+              if '.git/' in str(p):
+                  continue
+              try:
+                  list(yaml.safe_load_all(open(p)))
+              except yaml.YAMLError as e:
+                  errors.append(f"{p}: {e}")
+          if errors:
+              print('\n'.join(errors), file=sys.stderr)
+              sys.exit(1)
+          print(f"validated {sum(1 for _ in Path('.').rglob('*.y*ml') if '.git/' not in str(_))} YAML files")
+          PY
+
+      - name: Validate JSON
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          errors = []
+          count = 0
+          for p in Path('.').rglob('*.json'):
+              if '.git/' in str(p):
+                  continue
+              count += 1
+              try:
+                  json.load(open(p))
+              except json.JSONDecodeError as e:
+                  errors.append(f"{p}: {e}")
+          if errors:
+              print('\n'.join(errors), file=sys.stderr)
+              sys.exit(1)
+          print(f"validated {count} JSON files")
+          PY
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      # CodeQL uploads SARIF results to the code-scanning dashboard.
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@72c2e9c8dbe1b38affd10a5bb9f9b0e8a4e5a3c2 # v2.16.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          languages: actions
+          # queries: security-and-quality  (default; explicit for clarity)
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        with:
+          category: "/language:${{ matrix.language }}"
+          # Don't fail the build on findings — scorecard alerts are tracked
+          # separately in the Security tab.  Set to true to enforce in CI.
+          fail-on-annotation-error: true

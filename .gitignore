@@ -1,0 +1,29 @@
+# Git
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Node / frontend caches
+node_modules/
+.next/
+dist/
+build/
+.cache/
+
+# Logs / local env
+*.log
+.env
+.env.*
+!.env.example

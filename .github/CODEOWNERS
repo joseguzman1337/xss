@@ -1,0 +1,15 @@
+# CODEOWNERS — required for require_code_owner_reviews to enforce review.
+# Pattern order: latest matching pattern wins. Keep the most specific patterns
+# at the top and the broad default at the bottom.
+#
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repository.
+*       @joseguzman1337
+
+# Workflows deserve explicit review even on solo projects because they
+# carry elevated token scopes.
+/.github/workflows/   @joseguzman1337
+/.github/CODEOWNERS   @joseguzman1337
+/SECURITY.md          @joseguzman1337
+/LICENSE              @joseguzman1337

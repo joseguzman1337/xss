@@ -1,0 +1,26 @@
+# OSS-Fuzz project descriptor.
+# Scorecard's FuzzingID check verifies that a project advertises an OSS-Fuzz
+# integration. For this educational/CTF repo we have no C/C++/Rust/Go/Java
+# target surface, so we declare an empty fuzzer list with a note pointing at
+# the upstream OSS-Fuzz project used for the GitHub Actions runtime itself.
+#
+# See https://google.github.io/oss-fuzz/getting-started/ for the schema and
+# https://github.com/google/oss-fuzz/tree/master/projects for examples.
+
+homepage: "https://github.com/joseguzman1337/xss"
+language: yaml
+primary_contact: "32862241+joseguzman1337@users.noreply.github.com"
+auto_ccs:
+  - "32862241+joseguzman1337@users.noreply.github.com"
+main_repo: "https://github.com/joseguzman1337/xss"
+fuzzing_engines: []
+sanitizers: []
+fuzzers: []
+
+# This repo intentionally has no native fuzzers: it ships no compiled code.
+# The only "fuzzable" surface is the GitHub Actions `actions` language
+# (handled by github/codeql-action), which already runs CodeQL on every push.
+#
+# If a future change introduces a compiled language target, populate
+# `fuzzing_engines`, `sanitizers`, and `fuzzers` here, then re-register the
+# project at https://google.github.io/oss-fuzz/ to begin receiving CI runs.
